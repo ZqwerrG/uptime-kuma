@@ -1,24 +1,29 @@
 zerops:
-  # 注意：此处的 uptime-kuma 必须替换为你在 Zerops 创建的具体服务名称
+  # 注意：如果你的服务名不是 uptime-kuma，请修改这里
   - setup: uptime-kuma
+    build:
+      base: ubuntu@latest
+      buildCommands:
+        # 这一步会自动为你生成一个适配 Zerops 网络的 docker-compose.yml
+        - |
+          cat <<EOF > docker-compose.yml
+          services:
+            app:
+              image: louislam/uptime-kuma:latest
+              network_mode: "host"
+              volumes:
+                - /mnt/data:/app/data
+          EOF
+      deployFiles:
+        - ./docker-compose.yml
+      addToRunPrepare:
+        - ./docker-compose.yml
+
     run:
-      # 指定运行环境为 Docker
       base: docker@latest
-      
-      # 暴露 3001 端口并开启 HTTP 支持，以便你能通过网页访问
+      prepareCommands:
+        - docker compose pull app
+      start: docker compose up app --force-recreate
       ports:
         - port: 3001
           httpSupport: true
-          
-      # 拉取官方最新版的 Docker 镜像 (latest)
-      prepareCommands:
-        - docker image pull louislam/uptime-kuma:latest
-        
-      # 启动容器并挂载数据目录
-      start: docker run --network=host -v /mnt/data:/app/data louislam/uptime-kuma:latest
-      
-      # 监控容器健康状态
-      healthCheck:
-        httpGet:
-          port: 3001
-          path: /
