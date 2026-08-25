@@ -1,0 +1,24 @@
+zerops:
+  # 注意：此处的 uptime-kuma 必须替换为你在 Zerops 创建的具体服务名称
+  - setup: uptime-kuma
+    run:
+      # 指定运行环境为 Docker
+      base: docker@latest
+      
+      # 暴露 3001 端口并开启 HTTP 支持，以便你能通过网页访问
+      ports:
+        - port: 3001
+          httpSupport: true
+          
+      # 拉取官方最新版的 Docker 镜像 (latest)
+      prepareCommands:
+        - docker image pull louislam/uptime-kuma:latest
+        
+      # 启动容器并挂载数据目录
+      start: docker run --network=host -v /mnt/data:/app/data louislam/uptime-kuma:latest
+      
+      # 监控容器健康状态
+      healthCheck:
+        httpGet:
+          port: 3001
+          path: /
